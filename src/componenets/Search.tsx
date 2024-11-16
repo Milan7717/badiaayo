@@ -3,74 +3,76 @@ import axios from "axios";
 
 interface SearchProps {
   onLocationSelect: (location: { lat: number; lng: number }) => void;
+  userLocation?: { lat: number; lng: number }; // Optional user location
+  setUserLocation?: (location: { lat: number; lng: number }) => void; // Optional setter for user location
 }
 
-const Search: React.FC<SearchProps> = ({ onLocationSelect }) => {
+const Search: React.FC<SearchProps> = ({
+  onLocationSelect,
+  userLocation = { lat: 0, lng: 0 },
+  setUserLocation,
+}) => {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(
-    null
-  );
+  const [searchLocation, setSearchLocation] = useState(userLocation);
 
-  // Fetch user's current location on component mount
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setCurrentLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
+  const API_ENDPOINT =
+    "https://route-init.gallimap.com/api/v1/search/currentLocation";
+  const ACCESS_TOKEN = "28c1ef6e-50c0-42c1-9cbf-b41516dd600e";
+
+  // Utility function for fetching search results
+  const fetchSearchResults = async () => {
+    try {
+      const response = await axios.get(API_ENDPOINT, {
+        params: {
+          accessToken: ACCESS_TOKEN,
+          name: query.trim(),
+          currentLat: userLocation.lat,
+          currentLng: userLocation.lng,
         },
-        (error) => {
-          console.error("Error obtaining user location:", error);
-        }
-      );
-    } else {
-      console.error("Geolocation is not supported by this browser.");
-    }
-  }, []);
+      });
 
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching search results:", error);
+      throw error;
+    }
+  };
+
+  // Handle search logic
   const handleSearch = async () => {
-    if (!query.trim() || !currentLocation) {
-      console.error("Query or current location is missing.");
+    if (!query.trim()) {
+      console.error("Search query cannot be empty.");
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await axios.get(
-        `https://route-init.gallimap.com/api/v1/search/currentLocation`,
-        {
-          params: {
-            accessToken: "28c1ef6e-50c0-42c1-9cbf-b41516dd600e",
-            name: query,
-            currentLat: currentLocation.lat,
-            currentLng: currentLocation.lng,
-          },
-        }
-      );
+      const results = await fetchSearchResults();
 
-      // Log the response to debug
-      console.log("Search response:", response.data);
-
-      // Assuming the first result is the desired location
-      if (response.data && response.data[0]) {
+      if (results && results[0]) {
         const location = {
-          lat: response.data[0].latitude,
-          lng: response.data[0].longitude,
+          lat: results[0].latitude,
+          lng: results[0].longitude,
         };
-        onLocationSelect(location); // Pass the location to the parent
+
+        onLocationSelect(location);
+        setUserLocation?.(location);
       } else {
-        console.error("No results found.");
+        console.warn("No search results found.");
       }
     } catch (error) {
-      console.error("Error fetching search results:", error);
+      console.error("Search failed. Please try again later.");
     } finally {
       setLoading(false);
     }
   };
+
+  // Update `searchLocation` when `userLocation` changes
+  useEffect(() => {
+    setSearchLocation(userLocation);
+  }, [userLocation]);
 
   return (
     <div className="absolute top-4 left-4 z-10 bg-white p-4 rounded shadow">
@@ -84,14 +86,20 @@ const Search: React.FC<SearchProps> = ({ onLocationSelect }) => {
         />
         <button
           onClick={handleSearch}
-          className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600"
-          disabled={!currentLocation}
+          disabled={!searchLocation?.lat || !searchLocation?.lng || loading}
+          className={`bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600 ${
+            (!searchLocation?.lat || !searchLocation?.lng || loading) &&
+            "opacity-50 cursor-not-allowed"
+          }`}
         >
           {loading ? "Loading..." : "Search"}
         </button>
       </div>
-      {!currentLocation && (
-        <p className="text-red-500 mt-2">Unable to fetch user location. Please try again.</p>
+      {!searchLocation?.lat && !searchLocation?.lng && (
+        <p className="text-red-500 mt-2">
+          Unable to fetch user location. Please ensure location services are
+          enabled.
+        </p>
       )}
     </div>
   );

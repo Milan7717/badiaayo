@@ -1,13 +1,11 @@
 import React, { useRef, useEffect, useState } from "react";
 import maplibre from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import axios from "axios";
+import api from "../api/instance";
 
-const MapComponent: React.FC = () => {
+const MapComponent: React.FC<any> = ({ userLocation, setUserLocation }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(
-    null
-  );
+
   const [intersections, setIntersections] = useState<
     { latitude: number; longitude: number }[]
   >([]);
@@ -23,7 +21,8 @@ const MapComponent: React.FC = () => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          setUserLocation([longitude, latitude]);
+          // setUserLocation([longitude, latitude]);
+          setUserLocation([85.3485, 27.7166]);
         },
         (error) => {
           console.error("Error obtaining user location:", error);
@@ -38,15 +37,14 @@ const MapComponent: React.FC = () => {
     if (userLocation) {
       const fetchDangerZones = async () => {
         try {
-          const response = await axios.get(
-            "http://192.168.145.215:8000/getNearestRiver/",
-            {
-              params: {
-                latitude: userLocation[1],
-                longitude: userLocation[0],
-              },
-            }
-          );
+          const response = await api.get("/getNearestRiver", {
+            params: {
+              // latitude: userLocation[1],
+              // longitude: userLocation[0],
+              latitude: 27.7166,
+              longitude: 85.3485,
+            },
+          });
           console.log(response.data);
           setIntersections(response.data.intersections);
           setRiverCoordinate(response.data.riverCoordinate); // Fix key here if needed
@@ -77,17 +75,18 @@ const MapComponent: React.FC = () => {
 
       map.on("load", () => {
         if (intersections.length > 0) {
-          const intersectionGeoJson: GeoJSON.FeatureCollection<GeoJSON.Geometry> = {
-            type: "FeatureCollection",
-            features: intersections.map((zone) => ({
-              type: "Feature",
-              geometry: {
-                type: "Point",
-                coordinates: [zone.longitude, zone.latitude],
-              },
-              properties: {},
-            })),
-          };
+          const intersectionGeoJson: GeoJSON.FeatureCollection<GeoJSON.Geometry> =
+            {
+              type: "FeatureCollection",
+              features: intersections.map((zone) => ({
+                type: "Feature",
+                geometry: {
+                  type: "Point",
+                  coordinates: [zone.longitude, zone.latitude],
+                },
+                properties: {},
+              })),
+            };
 
           map.addSource("intersections", {
             type: "geojson",

@@ -1,10 +1,11 @@
-import config from "@/config"
 import axios from "axios";
-
+import api from "../api/instance";
 export const getAll = async () => {
-    const url = `https://newsapi.org/v2/everything?q=Nepal floods&apiKey=${config.NEWS_API_KEY}`;
-    const response = await axios.get(url);
-    return response.data;
+  const url = `https://newsapi.org/v2/everything?q=Nepal&floods&apiKey=${
+    import.meta.env.VITE_NEWS_API_KEY
+  }`;
+  const response = await axios.get(url);
+  return response.data;
 };
 
 //api key
