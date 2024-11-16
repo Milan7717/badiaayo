@@ -19,8 +19,8 @@ const MapComponent: React.FC<any> = ({ userLocation, setUserLocation }) => {
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
+        () => {
+          // const { latitude, longitude } = position.coords;
           // setUserLocation([longitude, latitude]);
           setUserLocation([85.3485, 27.7166]);
         },

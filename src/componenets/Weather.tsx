@@ -1,53 +1,89 @@
-import React from 'react';
-import {useGetWeatherData} from "@/queries/weather";
-import Loader from "@/components/loader/Loader";
+import React, { useEffect, useState } from 'react';
 
-interface WeatherInfoProps {
-    latitude?: number;
-    longitude?: number;
+interface WeatherData {
+    weather: { description: string }[];
+    main: {
+        temp: number;
+        feels_like: number;
+        temp_min: number;
+        temp_max: number;
+        humidity: number;
+        pressure: number;
+    };
+    name: string;
+    wind: { speed: number };
+    sys: { country: string };
+    visibility: number;
 }
 
-const WeatherCard = ({latitude, longitude}: WeatherInfoProps) => {
-    const {data: weatherData} = useGetWeatherData({
-        latitude: latitude ?? 0,
-        longitude: longitude ?? 0
-    });
+const WeatherAlert: React.FC = () => {
+    const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
-    if (!weatherData) return <Loader/>;
+    const API_KEY = '19c5ce24fadd06394909e2842d8c5aca';
+    const LAT = '27.7172'; // Example latitude for Kathmandu
+    const LON = '85.3240'; // Example longitude for Kathmandu
 
-    const {
-        current: {temperature_2m: temp, wind_speed_10m: speed},
-        current_units: {temperature_2m: tempUnit, wind_speed_10m: speedUnit},
-        hourly: {relative_humidity_2m: humidity, cloudcover}
-    } = weatherData;
+    useEffect(() => {
+        const fetchWeatherData = async () => {
+            try {
+                const response = await fetch(
+                    `https://api.openweathermap.org/data/2.5/weather?lat=${LAT}&lon=${LON}&appid=${API_KEY}&units=metric`
+                );
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch weather data');
+                }
+
+                const data = await response.json();
+                setWeatherData(data);
+            } catch (err: any) {
+                setError(err.message || 'Unknown error occurred');
+            }
+        };
+
+        fetchWeatherData();
+    }, []);
 
     return (
-        <div className="absolute top-0 bg-white rounded-lg shadow-lg p-6 w-80 z-10">
-            <div className="flex justify-between items-center mb-4">
-                <div className="text-xl font-semibold text-gray-800">Weather Info</div>
-            </div>
-
-            <div className="flex justify-center items-center mb-4">
-                <h1 className="text-6xl font-bold text-gray-900">{Math.round(temp)}{tempUnit}</h1>
-                <p className="text-sm text-gray-600 ml-2 capitalize">Current Temperature</p>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4 mt-4">
-                <div className="flex flex-col items-center">
-                    <span className="text-sm text-gray-600">Humidity</span>
-                    <h3 className="text-lg font-semibold text-gray-800">{humidity[0]}%</h3>
+        <div
+            className="absolute top-24 right-6 bg-white shadow-lg p-6 rounded-md border border-gray-300"
+        >
+            {error ? (
+                <p style={{ color: 'red' }}>{error}</p>
+            ) : weatherData ? (
+                <div className="flex flex-col gap-2">
+                    <h2 className="text-3xl font-bold text-blue-600">Weather Alert</h2>
+                    <p>
+                        <strong>Location:</strong> {weatherData.name}, {weatherData.sys.country}
+                    </p>
+                    <p>
+                        <strong>Temperature:</strong> {weatherData.main.temp}°C
+                    </p>
+                    <p>
+                        <strong>Feels Like:</strong> {weatherData.main.feels_like}°C
+                    </p>
+                    <p>
+                        <strong>Min Temperature:</strong> {weatherData.main.temp_min}°C
+                    </p>
+                    <p>
+                        <strong>Max Temperature:</strong> {weatherData.main.temp_max}°C
+                    </p>
+                    <p>
+                        <strong>Humidity:</strong> {weatherData.main.humidity}%
+                    </p>
+                    <p>
+                        <strong>Pressure:</strong> {weatherData.main.pressure} hPa
+                    </p>
+                    <p>
+                        <strong>Weather:</strong> {weatherData.weather[0].description}
+                    </p>
                 </div>
-                <div className="flex flex-col items-center">
-                    <span className="text-sm text-gray-600">Wind Speed</span>
-                    <h3 className="text-lg font-semibold text-gray-800">{speed} {speedUnit}</h3>
-                </div>
-                <div className="flex flex-col items-center">
-                    <span className="text-sm text-gray-600">Cloudiness</span>
-                    <h3 className="text-lg font-semibold text-gray-800">{cloudcover[0]}%</h3>
-                </div>
-            </div>
+            ) : (
+                <p>Loading weather data...</p>
+            )}
         </div>
     );
 };
 
-export default WeatherCard;
+export default WeatherAlert;

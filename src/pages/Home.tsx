@@ -1,29 +1,32 @@
-import React, { useState } from "react";
+import  { useState, useEffect } from "react";
 import MapComponent from "../componenets/GalliMap";
-import Search from "../componenets/Search";
 import { postToFacebook } from "../api/facebookPost";
+import NewsComponent from "../componenets/News";
+import WeatherAlert from "../componenets/Weather";
 
-const AlertForm = () => {
-  return (
-    <div className="bg-white absolute top-[20%] left-[30%] w-[600px] h-[500px]">
-      <p className="text-right pr-3 text-xl">X</p>
-      <h5 className="text-center text-red-800 text-2xl">Alert Form</h5>
-      <button>Submit</button>
-    </div>
-  );
-};
+// const AlertForm = () => {
+//   return (
+//     <div className="bg-white absolute top-[20%] left-[30%] w-[600px] h-[500px]">
+//       <p className="text-right pr-3 text-xl">X</p>
+//       <h5 className="text-center text-red-800 text-2xl">Alert Form</h5>
+//       <button>Submit</button>
+//     </div>
+//   );
+// };
 
 const Home = () => {
-  const [openForm, setOpenForm] = useState(false);
   const [isALertLoading, setIsAlertLoading] = useState(false);
   const [isPostSuccess, setIsPostSuccess] = useState(false);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(
     null
   );
-  const [searchedLocation, setSearchedLocation] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
+ 
+
+  useEffect(() => {
+    if (isPostSuccess) {
+      alert("Facebook post posted successfully");
+    }
+  }, [isPostSuccess]);
 
   const handleAlertFacebookPost = () => {
     setIsAlertLoading(true);
@@ -37,6 +40,7 @@ const Home = () => {
       }, 100);
     });
   };
+
   return (
     <div className="min-h-screen w-full relative">
       {/* Map Component */}
@@ -44,11 +48,6 @@ const Home = () => {
         userLocation={userLocation}
         setUserLocation={setUserLocation}
       />
-      {/* <Search
-        onLocationSelect={setSearchedLocation}
-        userLocation={userLocation}
-        setUserLocation={setUserLocation}
-      /> */}
       <div className="absolute z-100 top-4 right-4 ">
         <p
           className="bg-red-900 text-white px-4 py-2 rounded-md cursor-pointer"
@@ -56,10 +55,15 @@ const Home = () => {
         >
           🚨 &nbsp;Alert {isALertLoading ? "Loading..." : ""}
         </p>
-        {isPostSuccess && alert("Facebook post posted successfully")}
       </div>
 
       {/* {openForm && <AlertForm />} */}
+
+      {/* //news  */}
+      <NewsComponent />
+
+      {/* weather forecast */}
+      <WeatherAlert />
     </div>
   );
 };
