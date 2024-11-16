@@ -5,10 +5,19 @@ import axios from "axios";
 
 const MapComponent: React.FC = () => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
-  const [dangerZones, setDangerZones] = useState<{ latitude: number; longitude: number }[]>([]);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(
+    null
+  );
+  const [intersections, setIntersections] = useState<
+    { latitude: number; longitude: number }[]
+  >([]);
+  const [riverCoordinate, setRiverCoordinate] = useState<
+    { latitude: number; longitude: number }[]
+  >([]);
+  const [squareCoordinate, setSquareCoordinate] = useState<
+    { latitude: number; longitude: number }[]
+  >([]);
 
-  // Fetch user location
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -25,19 +34,23 @@ const MapComponent: React.FC = () => {
     }
   }, []);
 
-  // Fetch danger zones when the user location is available
   useEffect(() => {
     if (userLocation) {
       const fetchDangerZones = async () => {
         try {
-          const response = await axios.get("http://192.168.1.97:8000/getdangerzones/", {
-            params: {
-              lat: userLocation[1],
-              lng: userLocation[0],
-            },
-          });
+          const response = await axios.get(
+            "http://192.168.145.215:8000/getNearestRiver/",
+            {
+              params: {
+                latitude: userLocation[1],
+                longitude: userLocation[0],
+              },
+            }
+          );
           console.log(response.data);
-          setDangerZones(response.data); // Store the array of danger zones
+          setIntersections(response.data.intersections);
+          setRiverCoordinate(response.data.riverCoordinate); // Fix key here if needed
+          setSquareCoordinate(response.data.squareCoordinate);
         } catch (error) {
           console.error("Error fetching danger zones:", error);
         }
@@ -47,66 +60,120 @@ const MapComponent: React.FC = () => {
     }
   }, [userLocation]);
 
-  // Initialize the map once the user location is available
   useEffect(() => {
     if (mapContainerRef.current && userLocation) {
-      // Initialize the map
       const map = new maplibre.Map({
         container: mapContainerRef.current,
-        style: "https://map-init.gallimap.com/styles/light/style.json?accessToken=28c1ef6e-50c0-42c1-9cbf-b41516dd600e",
+        style:
+          "https://map-init.gallimap.com/styles/light/style.json?accessToken=28c1ef6e-50c0-42c1-9cbf-b41516dd600e",
         center: userLocation,
         zoom: 14,
       });
 
-      // Add a marker for the user's location
       new maplibre.Marker({ color: "blue" })
         .setLngLat(userLocation)
         .setPopup(new maplibre.Popup().setText("You are here"))
         .addTo(map);
 
-      // Add danger zones if available
-      if (dangerZones.length > 0) {
-        const geoJson: GeoJSON.FeatureCollection<GeoJSON.Geometry> = {
-          type: "FeatureCollection",
-          features: dangerZones.map((zone) => ({
-            type: "Feature",
-            geometry: {
-              type: "Point",
-              coordinates: [zone.longitude, zone.latitude], // Correct order: [longitude, latitude]
-            },
-            properties: {},
-          })),
-        };
+      map.on("load", () => {
+        if (intersections.length > 0) {
+          const intersectionGeoJson: GeoJSON.FeatureCollection<GeoJSON.Geometry> = {
+            type: "FeatureCollection",
+            features: intersections.map((zone) => ({
+              type: "Feature",
+              geometry: {
+                type: "Point",
+                coordinates: [zone.longitude, zone.latitude],
+              },
+              properties: {},
+            })),
+          };
 
-        map.on("load", () => {
-          map.addSource("danger-zones", {
+          map.addSource("intersections", {
             type: "geojson",
-            data: geoJson,
+            data: intersectionGeoJson,
           });
 
           map.addLayer({
-            id: "danger-zone-layer",
+            id: "intersection-layer",
             type: "circle",
-            source: "danger-zones",
+            source: "intersections",
             paint: {
-              "circle-radius": 50,
+              "circle-radius": 5,
               "circle-color": "red",
-              "circle-opacity": 0.5,
+              "circle-opacity": 1,
             },
           });
-        });
-      }
+        }
 
-      return () => map.remove(); // Clean up the map on unmount
+        if (riverCoordinate.length > 0) {
+          const riverGeoJson: GeoJSON.FeatureCollection<GeoJSON.Geometry> = {
+            type: "FeatureCollection",
+            features: riverCoordinate.map((zone) => ({
+              type: "Feature",
+              geometry: {
+                type: "Point",
+                coordinates: [zone.longitude, zone.latitude],
+              },
+              properties: {},
+            })),
+          };
+
+          map.addSource("river-coordinates", {
+            type: "geojson",
+            data: riverGeoJson,
+          });
+
+          map.addLayer({
+            id: "river-layer",
+            type: "circle",
+            source: "river-coordinates",
+            paint: {
+              "circle-radius": 7,
+              "circle-color": "green",
+              "circle-opacity": 1,
+            },
+          });
+        }
+
+        if (squareCoordinate.length > 0) {
+          const squareGeoJson: GeoJSON.FeatureCollection<GeoJSON.Geometry> = {
+            type: "FeatureCollection",
+            features: squareCoordinate.map((zone) => ({
+              type: "Feature",
+              geometry: {
+                type: "Point",
+                coordinates: [zone.longitude, zone.latitude],
+              },
+              properties: {},
+            })),
+          };
+
+          map.addSource("square-coordinates", {
+            type: "geojson",
+            data: squareGeoJson,
+          });
+
+          map.addLayer({
+            id: "square-layer",
+            type: "circle",
+            source: "square-coordinates",
+            paint: {
+              "circle-radius": 5,
+              "circle-color": "blue",
+              "circle-opacity": 1,
+            },
+          });
+        }
+      });
+
+      return () => map.remove();
     }
-  }, [userLocation, dangerZones]); // Depend on both userLocation and dangerZones
+  }, [userLocation, intersections, riverCoordinate, squareCoordinate]);
 
   return (
-    <div
-      ref={mapContainerRef}
-      style={{ width: "100%", height: "100vh" }}
-    >
-      {!userLocation && <p>Loading user location...</p>} {/* Loading message */}
+    <div ref={mapContainerRef} style={{ width: "100%", height: "100vh" }}>
+      {!userLocation && <p>Loading user location...</p>}
     </div>
   );
 };

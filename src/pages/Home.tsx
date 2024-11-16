@@ -13,9 +13,9 @@ const Home = () => {
     <div className="min-h-screen w-full relative">
       {/* Map Component */}
       <MapComponent />
-
+{/* 
       Search Component
-      <Search onLocationSelect={setSearchedLocation} />
+      <Search onLocationSelect={setSearchedLocation} /> */}
     </div>
   );
 };
