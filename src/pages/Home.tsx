@@ -1,23 +1,23 @@
-import React, { useState } from "react";
-import MapComponent from "../componenets/GalliMap";
-import Search from "../componenets/Search";
-
-
+import {useState} from "react";
+import MapComponent from "../components/Map.tsx";
+import Search from "../components/Search";
+import {SearchResult} from "../types/types.ts";
 
 const Home = () => {
-  const [searchedLocation, setSearchedLocation] = useState<{ lat: number; lng: number } | null>(
-    null
-  );
+    const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
 
-  return (
-    <div className="min-h-screen w-full relative">
-      {/* Map Component */}
-      <MapComponent />
+    const handleLocationSelect = (results: any) => {
+        if (results.success && results.data?.features) {
+            setSearchResults(results.data.features);
+        }
+    };
 
-      Search Component
-      <Search onLocationSelect={setSearchedLocation} />
-    </div>
-  );
+    return (
+        <div className="min-h-screen w-full relative">
+            <MapComponent searchResults={searchResults}/>
+            <Search onLocationSelect={handleLocationSelect}/>
+        </div>
+    );
 };
 
 export default Home;
