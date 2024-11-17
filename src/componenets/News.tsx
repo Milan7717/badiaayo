@@ -14,7 +14,7 @@ const NewsComponent: React.FC = () => {
     const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
     const [error, setError] = useState<string | null>(null);
 
-    const API_KEY = import.meta.env.VITE_NEWS_API_KEY;
+    const API_KEY = "ad4b453afd7449e6a624fa0fd1f329f3"
     const API_URL = `https://newsapi.org/v2/everything?q=Nepal floods&apiKey=${API_KEY}`;
 
     useEffect(() => {
