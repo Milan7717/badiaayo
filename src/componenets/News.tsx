@@ -16,7 +16,6 @@ const NewsComponent: React.FC = () => {
 
     const API_KEY = "ad4b453afd7449e6a624fa0fd1f329f3"
     const API_URL = `https://newsapi.org/v2/everything?q=Nepal floods&apiKey=${API_KEY}`;
-
     useEffect(() => {
         const fetchNews = async () => {
             try {
