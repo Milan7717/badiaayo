@@ -36,7 +36,7 @@ const NewsComponent: React.FC = () => {
 
     return (
         <div className='w-full max-h-screen flex items-center  '>
-        <div  className='absolute top-10 left-4 bg-white w-[22%] h-[80%] overflow-hidden' style={{ padding: '20px' }}>
+        <div  className='absolute top-24 left-4 bg-white w-[22%] h-[80%] overflow-hidden' style={{ padding: '20px' }}>
             <h2 className='text-3xl font-bold'>News on Nepal Floods</h2>
             {error ? (
                 <p style={{ color: 'red' }}>{error}</p>

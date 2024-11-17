@@ -1,8 +1,10 @@
-import  { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import MapComponent from "../componenets/GalliMap";
 import { postToFacebook } from "../api/facebookPost";
 import NewsComponent from "../componenets/News";
 import WeatherAlert from "../componenets/Weather";
+import Search from "../componenets/Search";
+import { fetchSearchResults } from "../api/searchLocation";
 
 // const AlertForm = () => {
 //   return (
@@ -20,8 +22,10 @@ const Home = () => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(
     null
   );
- 
-
+  const [searchedLocation, setSearchedLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   useEffect(() => {
     if (isPostSuccess) {
       alert("Facebook post posted successfully");
@@ -41,13 +45,26 @@ const Home = () => {
     });
   };
 
+
+  const handleSearch = (query: string) => {
+    fetchSearchResults(query, 27, 85).then((data) => {
+      if (data.data.features.length > 0) {
+        setSearchedLocation(data?.data?.features[0]?.geometry?.coordinates);
+      } else {
+        setSearchedLocation([] as any);
+      }
+    });
+  };
+
   return (
     <div className="min-h-screen w-full relative">
       {/* Map Component */}
       <MapComponent
-        userLocation={userLocation}
+        userLocation={searchedLocation ? searchedLocation : userLocation}
         setUserLocation={setUserLocation}
       />
+
+      <Search handleSearch={handleSearch} searchResults={searchedLocation} />
       <div className="absolute z-100 top-4 right-4 ">
         <p
           className="bg-red-900 text-white px-4 py-2 rounded-md cursor-pointer"
