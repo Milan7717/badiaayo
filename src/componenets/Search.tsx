@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState} from "react";
+
 
 interface SearchProps {
   handleSearch: (inputText: string) => void;
@@ -23,8 +24,6 @@ const Search: React.FC<SearchProps> = ({ handleSearch }) => {
           Search
         </button>
       </div>
-
-    
     </div>
   );
 };
