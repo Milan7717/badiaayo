@@ -22,8 +22,8 @@ const WeatherAlert: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const API_KEY = "19c5ce24fadd06394909e2842d8c5aca";
-  const LAT = "27.7172"; // Example latitude for Kathmandu
-  const LON = "85.3240"; // Example longitude for Kathmandu
+  const LAT = "27.62646"; // Example latitude for Kathmandu
+  const LON = "85.5383"; // Example longitude for Kathmandu
 
   useEffect(() => {
     const fetchWeatherData = async () => {

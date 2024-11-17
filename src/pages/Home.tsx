@@ -5,6 +5,7 @@ import NewsComponent from "../componenets/News";
 import WeatherAlert from "../componenets/Weather";
 import Search from "../componenets/Search";
 import { fetchSearchResults } from "../api/searchLocation";
+import EmergencyCall from "../componenets/EmergencyCall";
 
 // const AlertForm = () => {
 //   return (
@@ -96,6 +97,8 @@ const Home = () => {
 
       {/* weather forecast */}
       <WeatherAlert />
+
+      <EmergencyCall />
     </div>
   );
 };
