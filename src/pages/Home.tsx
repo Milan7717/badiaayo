@@ -18,6 +18,7 @@ const Home = () => {
   const [openForm, setOpenForm] = useState(false);
   const [isALertLoading, setIsAlertLoading] = useState(false);
   const [isPostSuccess, setIsPostSuccess] = useState(false);
+  const [isMapLoading, setIsMapLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(
     null
   );
@@ -39,7 +40,9 @@ const Home = () => {
     });
   };
   const handleSearch = (query: string) => {
+    setIsMapLoading(true);
     fetchSearchResults(query, 27, 85).then((data) => {
+      setIsMapLoading(false);
       if (data.data.features.length > 0) {
         setSearchedLocation(data?.data?.features[0]?.geometry?.coordinates);
       } else {
@@ -50,20 +53,34 @@ const Home = () => {
   return (
     <div className="min-h-screen w-full relative">
       {/* Map Component */}
-      <MapComponent
-        userLocation={searchedLocation ? searchedLocation : userLocation}
-        setUserLocation={setUserLocation}
-      />
-      <Search handleSearch={handleSearch} searchResults={searchedLocation} />
-      <div className="absolute z-100 top-4 right-4 ">
-        <p
-          className="bg-red-900 text-white px-4 py-2 rounded-md cursor-pointer"
-          onClick={handleAlertFacebookPost}
-        >
-          🚨 &nbsp;Alert {isALertLoading ? "Loading..." : ""}
-        </p>
-        {isPostSuccess && alert("Facebook post posted successfully")}
-      </div>
+      {isMapLoading ? (
+        <div className="text-4xl h-screen w-screen  flex justify-center items-center">
+          <p className="animate-spin text-[100px]">⏳</p>
+        </div>
+      ) : (
+        <>
+          <MapComponent
+            searchedLocation={searchedLocation}
+            userLocation={searchedLocation ? searchedLocation : userLocation}
+            setUserLocation={setUserLocation}
+            setIsMapLoading={setIsMapLoading}
+          />
+
+          <Search
+            handleSearch={handleSearch}
+            searchResults={searchedLocation}
+          />
+          <div className="absolute z-100 top-4 right-4 ">
+            <p
+              className="bg-red-900 text-white px-4 py-2 rounded-md cursor-pointer"
+              onClick={handleAlertFacebookPost}
+            >
+              🚨 &nbsp;Alert {isALertLoading ? "Loading..." : ""}
+            </p>
+            {isPostSuccess && alert("Facebook post posted successfully")}
+          </div>
+        </>
+      )}
 
       {/* {openForm && <AlertForm />} */}
     </div>

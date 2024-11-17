@@ -24,8 +24,6 @@ const Search: React.FC<SearchProps> = ({ handleSearch, searchResults }) => {
           Search
         </button>
       </div>
-
-      {console.log(searchResults)}
     </div>
   );
 };

@@ -3,7 +3,11 @@ import maplibre from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import api from "../api/instance";
 
-const MapComponent: React.FC<any> = ({ userLocation, setUserLocation }) => {
+const MapComponent: React.FC<any> = ({
+  userLocation,
+  setUserLocation,
+  searchedLocation,
+}) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
   const [intersections, setIntersections] = useState<
@@ -74,6 +78,7 @@ const MapComponent: React.FC<any> = ({ userLocation, setUserLocation }) => {
         .addTo(map);
 
       map.on("load", () => {
+        const radius = 1000;
         if (intersections.length > 0) {
           const intersectionGeoJson: GeoJSON.FeatureCollection<GeoJSON.Geometry> =
             {
@@ -98,9 +103,15 @@ const MapComponent: React.FC<any> = ({ userLocation, setUserLocation }) => {
             type: "circle",
             source: "intersections",
             paint: {
-              "circle-radius": 5,
+              "circle-radius": {
+                stops: [
+                  [0, 0], // Zoom 0
+                  [21, radius * 1.5], // Zoom 14
+                ],
+                base: 2,
+              },
               "circle-color": "red",
-              "circle-opacity": 1,
+              "circle-opacity": 0.5,
             },
           });
         }
@@ -128,8 +139,14 @@ const MapComponent: React.FC<any> = ({ userLocation, setUserLocation }) => {
             type: "circle",
             source: "river-coordinates",
             paint: {
-              "circle-radius": 7,
-              "circle-color": "green",
+              "circle-radius": {
+                stops: [
+                  [0, 0], // Zoom 0
+                  [22, radius * 1.5], // Zoom 14
+                ],
+                base: 2,
+              },
+              "circle-color": "#0099FF",
               "circle-opacity": 1,
             },
           });
@@ -158,17 +175,88 @@ const MapComponent: React.FC<any> = ({ userLocation, setUserLocation }) => {
             type: "circle",
             source: "square-coordinates",
             paint: {
-              "circle-radius": 5,
+              "circle-radius": 0,
               "circle-color": "blue",
               "circle-opacity": 1,
             },
           });
         }
       });
+      map.on("load", () => {
+        // Add a circle around the searched location
+        const radius = 1000; // Radius in meters
+        const searchedGeoJson = {
+          type: "FeatureCollection",
+          features: [
+            {
+              type: "Feature",
+              geometry: {
+                type: "Point",
+                coordinates: searchedLocation,
+              },
+              properties: {},
+            },
+          ],
+        };
+
+        map?.addSource("searched-location", {
+          type: "geojson",
+          data: searchedGeoJson,
+        });
+
+        // map.addLayer({
+        //   id: "searched-circle",
+        //   type: "circle",
+        //   source: "searched-location",
+        //   paint: {
+        //     "circle-radius": [
+        //       "interpolate",
+        //       ["linear"],
+        //       ["zoom"],
+        //       5, // Zoom level 5
+        //       5, // Radius 5px
+        //       15, // Zoom level 15
+        //       20, // Radius 20px
+
+        //     ],
+        //     "circle-color": "blue",
+        //     "circle-opacity": 1,
+        //   },
+        // });
+        // Draw a circle layer
+        map.addLayer({
+          id: "searched-circle",
+          type: "circle",
+          source: "searched-location",
+          paint: {
+            "circle-radius": {
+              stops: [
+                [0, 0], // Zoom 0
+                [21, radius * 1.5], // Zoom 14
+              ],
+              base: 2,
+            },
+            "circle-color": "rgba(0, 123, 255, 0.5)", // Blue with transparency
+            "circle-opacity": 0.6,
+          },
+        });
+
+        // Add a marker for the exact searched location
+        new maplibre.Marker({ color: "blue" })
+          .setLngLat(searchedLocation)
+          .setPopup(new maplibre.Popup().setText("Searched Location"))
+          .addTo(map);
+      });
 
       return () => map.remove();
     }
   }, [userLocation, intersections, riverCoordinate, squareCoordinate]);
+
+  useEffect(() => {
+    if (searchedLocation) {
+      console.log(searchedLocation);
+    }
+  }, [searchedLocation]);
 
   return (
     <div ref={mapContainerRef} style={{ width: "100%", height: "100vh" }}>
