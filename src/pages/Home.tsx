@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import MapComponent from "../componenets/GalliMap";
 import Search from "../componenets/Search";
 import { postToFacebook } from "../api/facebookPost";
+import { fetchSearchResults } from "../api/searchLocation";
 
 const AlertForm = () => {
   return (
@@ -37,18 +38,23 @@ const Home = () => {
       }, 100);
     });
   };
+  const handleSearch = (query: string) => {
+    fetchSearchResults(query, 27, 85).then((data) => {
+      if (data.data.features.length > 0) {
+        setSearchedLocation(data?.data?.features[0]?.geometry?.coordinates);
+      } else {
+        setSearchedLocation([] as any);
+      }
+    });
+  };
   return (
     <div className="min-h-screen w-full relative">
       {/* Map Component */}
       <MapComponent
-        userLocation={userLocation}
+        userLocation={searchedLocation ? searchedLocation : userLocation}
         setUserLocation={setUserLocation}
       />
-      {/* <Search
-        onLocationSelect={setSearchedLocation}
-        userLocation={userLocation}
-        setUserLocation={setUserLocation}
-      /> */}
+      <Search handleSearch={handleSearch} searchResults={searchedLocation} />
       <div className="absolute z-100 top-4 right-4 ">
         <p
           className="bg-red-900 text-white px-4 py-2 rounded-md cursor-pointer"
